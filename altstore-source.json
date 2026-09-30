@@ -1,0 +1,65 @@
+{
+  "name": "Ritme",
+  "identifier": "nl.verhoef.ritme.source",
+  "subtitle": "A personal mileage log for iPhone",
+  "description": "Development builds of Ritme. Record trips, classify Work or Private, and export mileage reports. Requires iOS 26 or later.",
+  "iconURL": "https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/Distribution/Ritme-Icon.png",
+  "website": "https://github.com/MiranoVerhoef/Ritme",
+  "tintColor": "#007AFF",
+  "featuredApps": [
+    "nl.verhoef.ritme"
+  ],
+  "apps": [
+    {
+      "name": "Ritme",
+      "bundleIdentifier": "nl.verhoef.ritme",
+      "developerName": "Mirano Verhoef",
+      "subtitle": "Trip recording and mileage reports",
+      "localizedDescription": "An early native iPhone beta with GPS trip recording, saved places, Work/Private classification, schedules, holiday mode, and CSV/PDF/GPX exports. CarPlay and Bluetooth setup is guided through Shortcuts. This build stores data locally; iCloud sync is not active. The sideload package does not include the Watch companion. Physical driving and paired-Watch testing are still required.",
+      "iconURL": "https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/Distribution/Ritme-Icon.png",
+      "tintColor": "#007AFF",
+      "category": "utilities",
+      "screenshots": [
+        {
+          "imageURL": "https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/Preview/trips.png",
+          "width": 1206,
+          "height": 2622
+        },
+        {
+          "imageURL": "https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/Preview/places.png",
+          "width": 1206,
+          "height": 2622
+        },
+        {
+          "imageURL": "https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/Preview/reports.png",
+          "width": 1206,
+          "height": 2622
+        },
+        {
+          "imageURL": "https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/Preview/settings.png",
+          "width": 1206,
+          "height": 2622
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "buildVersion": "1",
+          "date": "2026-09-30",
+          "localizedDescription": "First development beta. Native list and form layouts, trip recording, places, work rules, holiday mode, exports, and guided Shortcuts setup. Local storage; iPhone-only unsigned sideload package.",
+          "downloadURL": "https://github.com/MiranoVerhoef/Ritme/releases/download/v0.1.0/Ritme-v0.1.0.ipa",
+          "size": 540079,
+          "minOSVersion": "26.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocationAlwaysAndWhenInUseUsageDescription": "Ritme needs background location access to keep recording your active trip when your iPhone is locked.",
+          "NSLocationWhenInUseUsageDescription": "Ritme uses your location to record the route and distance of trips you start."
+        }
+      }
+    }
+  ],
+  "news": []
+}
