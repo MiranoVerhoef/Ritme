@@ -80,14 +80,33 @@ struct ReportsView: View {
                     HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Total distance").font(.subheadline).foregroundStyle(.secondary)
-                            Text("\(Format.km(trips.reduce(0) { $0 + $1.distanceMeters })) km").font(.title2.weight(.semibold)).monospacedDigit()
+                            Text("\(Format.km(trips.reduce(0) { $0 + $1.distanceMeters })) km").font(.largeTitle.weight(.semibold)).monospacedDigit().foregroundStyle(Style.accent)
                         }
                         Spacer()
                         Text("\(trips.count) trips").font(.subheadline).foregroundStyle(.secondary)
                     }.padding(.vertical, 4)
+                    let distance = trips.reduce(0) { $0 + $1.distanceMeters }
+                    if distance > 0 {
+                        GeometryReader { geometry in
+                            HStack(spacing: 2) {
+                                ForEach(TripKind.allCases) { kind in
+                                    let fraction = trips.filter { $0.kind == kind }.reduce(0) { $0 + $1.distanceMeters } / distance
+                                    if fraction > 0 {
+                                        RoundedRectangle(cornerRadius: 3).fill(Style.color(kind))
+                                            .frame(width: max(0, geometry.size.width - 4) * fraction)
+                                    }
+                                }
+                            }
+                        }.frame(height: 9).accessibilityHidden(true)
+                            .listRowSeparator(.hidden)
+                    }
                     ForEach(TripKind.allCases) { kind in
-                        LabeledContent(kind.title, value: "\(Format.km(trips.filter { $0.kind == kind }.reduce(0) { $0 + $1.distanceMeters })) km")
-                            .monospacedDigit()
+                        HStack {
+                            KindBadge(kind: kind)
+                            Spacer()
+                            Text("\(Format.km(trips.filter { $0.kind == kind }.reduce(0) { $0 + $1.distanceMeters })) km")
+                                .monospacedDigit().foregroundStyle(.secondary)
+                        }
                     }
                 }
                 Section {

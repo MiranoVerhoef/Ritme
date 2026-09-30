@@ -9,8 +9,13 @@ struct PlacesView: View {
             List {
                 Section {
                     if store.places.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("No saved places").font(.headline)
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 8) {
+                                PlaceSymbol(symbol: "house.fill", color: Style.color(.personal))
+                                PlaceSymbol(symbol: "building.2.fill")
+                                PlaceSymbol(symbol: "mappin", color: .orange)
+                            }
+                            Text("Your regular destinations").font(.headline)
                             Text("Add Home, Office, or a regular destination.").font(.subheadline).foregroundStyle(.secondary)
                             Button("Add place") { adding = true }.padding(.top, 4)
                         }.padding(.vertical, 12)
@@ -18,7 +23,7 @@ struct PlacesView: View {
                     ForEach(store.places) { place in
                         NavigationLink { PlaceDetail(place: place) } label: {
                             HStack(spacing: 12) {
-                                Image(systemName: place.icon).foregroundStyle(.secondary).frame(width: 24)
+                                PlaceSymbol(symbol: place.icon, color: place.icon == "house.fill" ? Style.color(.personal) : Style.accent)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(place.name)
                                     Text(place.address).font(.caption).foregroundStyle(.secondary).lineLimit(2)

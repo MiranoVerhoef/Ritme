@@ -10,6 +10,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('ipa', type=Path)
 parser.add_argument('--date', default=datetime.date.today().isoformat())
+parser.add_argument('--release-notes', default='Native trip dashboard, route previews, colored purposes, schedules, exports and guided Shortcuts setup. Local storage; iPhone-only unsigned sideload package.')
 args = parser.parse_args()
 datetime.date.fromisoformat(args.date)
 with zipfile.ZipFile(args.ipa) as archive:
@@ -35,7 +36,7 @@ source = {
         'screenshots': [{'imageURL': f'{raw}/Preview/{name}.png', 'width': 1206, 'height': 2622} for name in ['trips', 'places', 'reports', 'settings']],
         'versions': [{
             'version': version, 'buildVersion': info['CFBundleVersion'], 'date': args.date,
-            'localizedDescription': 'First development beta. Native list and form layouts, trip recording, places, work rules, holiday mode, exports, and guided Shortcuts setup. Local storage; iPhone-only unsigned sideload package.',
+            'localizedDescription': args.release_notes,
             'downloadURL': f'{release}/{args.ipa.name}', 'size': args.ipa.stat().st_size,
             'minOSVersion': info['MinimumOSVersion']
         }],
@@ -45,5 +46,10 @@ source = {
         }
     }], 'news': []
 }
+feed_path = Path('altstore-source.json')
+if feed_path.exists():
+    previous = json.loads(feed_path.read_text())
+    previous_app = next((app for app in previous.get('apps', []) if app.get('bundleIdentifier') == info['CFBundleIdentifier']), {})
+    source['apps'][0]['versions'].extend(entry for entry in previous_app.get('versions', []) if entry.get('version') != version)
 Path('altstore-source.json').write_text(json.dumps(source, indent=2) + '\n')
 print('Generated altstore-source.json from', args.ipa)

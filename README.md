@@ -1,6 +1,6 @@
 # Ritme
 
-A native iPhone mileage logger with trip recording, Work/Private classification, saved places, work schedules, holiday mode and mileage exports. Built with SwiftUI and SwiftData, using native lists, standard navigation and a restrained interface. **Ritme is a working name.** All code and artwork are original.
+A native iPhone mileage logger with trip recording, Work/Private classification, saved places, work schedules, holiday mode and mileage exports. Built with SwiftUI and SwiftData, using native navigation, a tinted vehicle dashboard, colored purpose labels and a latest-trip route preview. **Ritme is a working name.** All code and artwork are original.
 
 ## Install the development beta
 

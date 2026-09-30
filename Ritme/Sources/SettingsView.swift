@@ -10,7 +10,7 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section("Recording") {
-                    NavigationLink("Shortcuts setup") { AutomationSetupView() }
+                    NavigationLink { AutomationSetupView() } label: { Label { Text("Shortcuts setup") } icon: { Image(systemName: "bolt.fill").foregroundStyle(Style.accent) } }
                     LabeledContent("Location access", value: locationTitle)
                     Button("Allow background location") { recorder.requestAlways() }
                     Button("Open iPhone settings") { if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
@@ -24,19 +24,19 @@ struct SettingsView: View {
                     Button("Add vehicle") { addVehicle = true }
                 }
                 Section("Classification") {
-                    NavigationLink("Work schedules") { RulesView() }
-                    NavigationLink { HolidayView() } label: { LabeledContent("Holiday mode", value: store.preferences.holidayActive ? "On" : "Off") }
+                    NavigationLink { RulesView() } label: { Label { Text("Work schedules") } icon: { Image(systemName: "calendar").foregroundStyle(Style.accent) } }
+                    NavigationLink { HolidayView() } label: { LabeledContent { Text(store.preferences.holidayActive ? "On" : "Off") } label: { Label { Text("Holiday mode") } icon: { Image(systemName: "sun.max.fill").foregroundStyle(.orange) } } }
                 }
                 Section("Data & devices") {
                     NavigationLink { DataSettingsView() } label: { LabeledContent("Storage", value: store.cloudEnabled ? "iCloud" : "On this iPhone") }
-                    NavigationLink("Apple Watch") { WatchSettingsView() }
+                    NavigationLink { WatchSettingsView() } label: { Label { Text("Apple Watch") } icon: { Image(systemName: "applewatch").foregroundStyle(Style.accent) } }
                 }
                 Section {
                     Button("Load sample trips") { store.loadDemo() }.disabled(store.trips.contains(where: \.isDemo))
                     if store.trips.contains(where: \.isDemo) { Button("Remove sample trips") { store.deleteDemo() } }
                 } header: { Text("Sample data") } footer: { Text("Sample trips are excluded from mileage totals and exports.") }
                 Section {
-                    LabeledContent("Version", value: "0.1.0 (1)")
+                    LabeledContent("Version", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"))")
                     Link("GitHub", destination: URL(string: "https://github.com/MiranoVerhoef/Ritme")!)
                 } header: { Text("Ritme") } footer: { Text("Development beta") }
             }.navigationTitle("Settings").sheet(isPresented: $addVehicle) { AddVehicleView() }

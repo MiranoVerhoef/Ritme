@@ -43,6 +43,15 @@
       ],
       "versions": [
         {
+          "version": "0.1.1",
+          "buildVersion": "2",
+          "date": "2026-09-30",
+          "localizedDescription": "Hybrid interface update: soft blue vehicle dashboard, quick vehicle selection, colored purpose labels, connected route markers, latest-trip map preview, place icons and mileage breakdown.",
+          "downloadURL": "https://github.com/MiranoVerhoef/Ritme/releases/download/v0.1.1/Ritme-v0.1.1.ipa",
+          "size": 582930,
+          "minOSVersion": "26.0"
+        },
+        {
           "version": "0.1.0",
           "buildVersion": "1",
           "date": "2026-09-30",

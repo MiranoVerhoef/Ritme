@@ -8,6 +8,7 @@ struct TripsView: View {
     @State private var search = ""
     @State private var showingSearch = false
     @State private var manual = false
+    @State private var addVehicle = false
     @State private var confirmStop = false
     private var visible: [Trip] {
         store.trips.filter { trip in
@@ -31,12 +32,15 @@ struct TripsView: View {
                     }
                 }
                 Section {
-                    recordingStatus
-                    HStack(spacing: 24) {
-                        total("Today", meters: todayTrips.reduce(0) { $0 + $1.distanceMeters })
+                    VStack(alignment: .leading, spacing: 16) {
+                        recordingStatus
                         Divider()
-                        total("Work", meters: todayTrips.filter { $0.kind == .work }.reduce(0) { $0 + $1.distanceMeters })
-                    }.padding(.vertical, 4)
+                        HStack(spacing: 24) {
+                            total("Today", meters: todayTrips.reduce(0) { $0 + $1.distanceMeters })
+                            total("Work today", meters: todayTrips.filter { $0.kind == .work }.reduce(0) { $0 + $1.distanceMeters })
+                        }
+                    }.padding(.vertical, 6)
+                        .listRowBackground(Style.accent.opacity(0.07))
                 }
                 if store.preferences.holidayActive {
                     Section {
@@ -72,7 +76,7 @@ struct TripsView: View {
                     Section {
                         ForEach(visible.filter { Calendar.current.isDate($0.startedAt, inSameDayAs: day) }) { trip in
                             VStack(alignment: .leading, spacing: 10) {
-                                NavigationLink { TripDetailView(trip: trip) } label: { TripSummary(trip: trip) }
+                                NavigationLink { TripDetailView(trip: trip) } label: { TripSummary(trip: trip, showRoute: trip.id == visible.first?.id) }
                                 if trip.kind == .unclassified { KindButtons(selected: trip.kind) { store.mark(trip, as: $0) } }
                             }.padding(.vertical, 4)
                                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -89,22 +93,54 @@ struct TripsView: View {
                 ToolbarItem(placement: .topBarTrailing) { Button { manual = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a manual trip") }
             }
             .sheet(isPresented: $manual) { ManualTripView() }
+            .sheet(isPresented: $addVehicle) { AddVehicleView() }
             .confirmationDialog("Finish this trip?", isPresented: $confirmStop, titleVisibility: .visible) { Button("Finish and save") { recorder.stop() } }
         }
     }
     private var recordingStatus: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
-                Circle().fill(store.activeTrip == nil ? Color.secondary : Style.accent).frame(width: 7, height: 7).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(store.activeTrip == nil ? "Not recording" : "Trip in progress").font(.subheadline.weight(.semibold))
-                    Text(store.selectedVehicle?.name ?? "No vehicle selected").font(.caption).foregroundStyle(.secondary)
+                PlaceSymbol(symbol: "car.fill")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(store.activeTrip == nil ? "CURRENT VEHICLE" : "RECORDING")
+                        .font(.caption2.weight(.semibold)).tracking(0.8).foregroundStyle(.secondary)
+                    if let active = store.activeTrip {
+                        Text(store.vehicleName(for: active)).font(.headline)
+                    } else if let vehicle = store.selectedVehicle {
+                        Menu {
+                            ForEach(store.vehicles) { vehicle in
+                                Button {
+                                    store.preferences.selectedVehicleID = vehicle.id; store.save()
+                                } label: {
+                                    if vehicle.id == store.selectedVehicle?.id { Label(vehicle.name, systemImage: "checkmark") }
+                                    else { Text(vehicle.name) }
+                                }
+                            }
+                            Button("Add vehicle", systemImage: "plus") { addVehicle = true }
+                        } label: {
+                            HStack(spacing: 5) {
+                                Text(vehicle.name).font(.headline).foregroundStyle(.primary).lineLimit(1)
+                                Image(systemName: "chevron.down").font(.caption2.weight(.semibold)).foregroundStyle(Style.accent)
+                            }
+                        }
+                        .buttonStyle(.borderless).accessibilityLabel("Select vehicle, current vehicle \(vehicle.name)")
+                    } else {
+                        Button("Add your car") { addVehicle = true }.font(.headline).buttonStyle(.borderless)
+                    }
                 }
+                Spacer(minLength: 0)
+            }
+            HStack {
+                HStack(spacing: 6) {
+                    Circle().fill(store.activeTrip == nil ? Color.secondary : Color.green).frame(width: 6, height: 6)
+                    Text(store.activeTrip == nil ? "Not recording" : "Trip in progress").font(.subheadline).foregroundStyle(.secondary)
+                }.accessibilityElement(children: .combine)
                 Spacer()
                 if store.activeTrip == nil {
-                    Button("Start") { recorder.start() }.buttonStyle(.bordered).accessibilityLabel("Start recording a trip").accessibilityIdentifier("startTrip")
+                    Button { recorder.start() } label: { Label("Start trip", systemImage: "play.fill").font(.subheadline.weight(.semibold)) }
+                        .buttonStyle(.borderedProminent).accessibilityLabel("Start recording a trip").accessibilityIdentifier("startTrip")
                 } else {
-                    Button("Finish") { confirmStop = true }.buttonStyle(.bordered).accessibilityLabel("Finish recording this trip")
+                    Button("Finish trip") { confirmStop = true }.buttonStyle(.borderedProminent).accessibilityLabel("Finish recording this trip")
                 }
             }
             if let trip = store.activeTrip {
@@ -112,14 +148,14 @@ struct TripsView: View {
                     Text("\(Format.km(trip.distanceMeters)) km").monospacedDigit()
                     Spacer()
                     TimelineView(.periodic(from: .now, by: 60)) { _ in Text(Format.duration(trip.duration)).monospacedDigit() }
-                }.font(.subheadline)
+                }.font(.title3.weight(.semibold))
                 HStack {
                     Text(recorder.status).font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Button("Resume GPS") { recorder.resume() }.font(.caption).buttonStyle(.borderless)
                 }
             }
-        }.padding(.vertical, 3)
+        }
     }
     private func total(_ title: String, meters: Double) -> some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -136,6 +172,14 @@ struct TripsView: View {
 
 struct TripSummary: View {
     var trip: Trip
+    var showRoute = false
+    private var previewRect: MKMapRect {
+        let rect = trip.points.map { point in
+            let position = MKMapPoint(point.coordinate)
+            return MKMapRect(x: position.x, y: position.y, width: 1, height: 1)
+        }.reduce(MKMapRect.null) { $0.union($1) }
+        return rect.insetBy(dx: -max(rect.size.width * 0.2, 500), dy: -max(rect.size.height * 0.2, 500))
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -145,14 +189,22 @@ struct TripSummary: View {
                 KindBadge(kind: trip.kind)
             }
             HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(trip.origin).font(.subheadline).foregroundStyle(.secondary)
-                    Text(trip.destination).font(.body.weight(.medium))
-                }.lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+                RouteStops(origin: trip.origin, destination: trip.destination, color: Style.color(trip.kind))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(alignment: .trailing, spacing: 5) {
                     Text("\(Format.km(trip.distanceMeters)) km").font(.subheadline.weight(.semibold)).monospacedDigit()
                     Text(Format.duration(trip.duration)).font(.caption).foregroundStyle(.secondary)
                 }.fixedSize(horizontal: true, vertical: false)
+            }
+            if showRoute && !trip.points.isEmpty {
+                Map(initialPosition: .rect(previewRect)) {
+                    MapPolyline(coordinates: trip.points.map(\.coordinate)).stroke(Style.accent, lineWidth: 3)
+                    if let first = trip.points.first { Annotation("", coordinate: first.coordinate) { Circle().fill(.white).frame(width: 9, height: 9).overlay(Circle().stroke(Style.accent, lineWidth: 2)) } }
+                    if let last = trip.points.last { Annotation("", coordinate: last.coordinate) { Circle().fill(Style.accent).frame(width: 10, height: 10).overlay(Circle().stroke(.white, lineWidth: 2)) } }
+                }.mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+                    .mapControlVisibility(.hidden).frame(height: 90)
+                    .clipShape(RoundedRectangle(cornerRadius: 10)).allowsHitTesting(false)
+                    .accessibilityHidden(true)
             }
         }.accessibilityElement(children: .combine)
     }
