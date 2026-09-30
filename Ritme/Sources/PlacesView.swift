@@ -34,7 +34,7 @@ struct PlacesView: View {
                 } footer: {
                     Text("Saved places identify trip destinations and can be used in work rules. Nearby parking is included within each place’s recognition radius.")
                 }
-            }.navigationTitle("Places")
+            }.listSectionSpacing(.custom(12)).navigationTitle("Places").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { adding = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add place") } }
                 .sheet(isPresented: $adding) { AddPlaceView() }
         }

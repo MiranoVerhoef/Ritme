@@ -39,7 +39,7 @@ struct SettingsView: View {
                     LabeledContent("Version", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"))")
                     Link("GitHub", destination: URL(string: "https://github.com/MiranoVerhoef/Ritme")!)
                 } header: { Text("Ritme") } footer: { Text("Development beta") }
-            }.navigationTitle("Settings").sheet(isPresented: $addVehicle) { AddVehicleView() }
+            }.listSectionSpacing(.custom(12)).navigationTitle("Settings").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $addVehicle) { AddVehicleView() }
         }
     }
     private var locationTitle: String {

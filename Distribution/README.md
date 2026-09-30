@@ -14,7 +14,7 @@ https://raw.githubusercontent.com/MiranoVerhoef/Ritme/main/altstore-source.json
 
 Choose **Ritme** from the source and install it. Availability of third-party sources depends on your installer and version. The feed includes the exact version, build, IPA byte count, minimum iOS version, screenshots, and location permission descriptions.
 
-Alternatively, download `Ritme-v0.1.1.ipa` from the [GitHub release](https://github.com/MiranoVerhoef/Ritme/releases/tag/v0.1.1), then import it into your sideloading app. The IPA is unsigned; your installer must sign it for your iPhone. With a free Apple account, AltStore Classic installations normally expire after seven days and require refreshing. See the [official AltStore Classic guide](https://faq.altstore.io/altstore-classic/your-altstore) for signing, refresh, and account limits.
+Alternatively, download `Ritme-v0.1.2.ipa` from the [GitHub release](https://github.com/MiranoVerhoef/Ritme/releases/tag/v0.1.2), then import it into your sideloading app. The IPA is unsigned; your installer must sign it for your iPhone. With a free Apple account, AltStore Classic installations normally expire after seven days and require refreshing. See the [official AltStore Classic guide](https://faq.altstore.io/altstore-classic/your-altstore) for signing, refresh, and account limits.
 
 ## What this package includes
 
@@ -38,7 +38,7 @@ xcodebuild -project Ritme.xcodeproj -scheme Ritme -configuration Release \
   -destination 'generic/platform=iOS' -derivedDataPath build/ReleaseDerivedData \
   CODE_SIGNING_ALLOWED=NO build
 python3 Scripts/package_release.py
-python3 Scripts/generate_altstore_source.py build/releases/Ritme-v0.1.1.ipa --date 2026-09-30
+python3 Scripts/generate_altstore_source.py build/releases/Ritme-v0.1.2.ipa --date 2026-09-30
 ```
 
 Update the version/build in the iPhone and Watch Info.plists before a new version. Use that version's IPA filename and release date in the feed command. The packaging script checks the device platform, copies the unsigned build, and removes Watch content only from the distribution copy. Upload the IPA to the matching GitHub release; keep the source feed's download URL and file size consistent with the uploaded asset. Preserve previous version entries when adding future releases.

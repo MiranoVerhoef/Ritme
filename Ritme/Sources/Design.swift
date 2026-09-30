@@ -26,7 +26,7 @@ struct KindBadge: View {
     var body: some View {
         Label(kind.title, systemImage: kind.icon).font(.caption.weight(.medium))
             .foregroundStyle(Style.color(kind))
-            .padding(.horizontal, 8).padding(.vertical, 5)
+            .padding(.horizontal, 6).padding(.vertical, 3)
             .background(Style.color(kind).opacity(0.10), in: Capsule())
     }
 }
@@ -44,13 +44,13 @@ struct KindButtons: View {
     var selected: TripKind
     var action: (TripKind) -> Void
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             ForEach([TripKind.work, .personal]) { kind in
                 Button { action(kind) } label: {
                     HStack(spacing: 6) {
                         Text(kind.title)
                         if selected == kind { Image(systemName: "checkmark").font(.caption.weight(.semibold)) }
-                    }.font(.subheadline).frame(maxWidth: .infinity, minHeight: 30)
+                    }.font(.caption.weight(.medium)).frame(maxWidth: .infinity, minHeight: 30)
                 }.buttonStyle(.bordered).tint(Style.color(kind))
             }
         }
@@ -73,15 +73,15 @@ struct RouteStops: View {
     var destination: String
     var color: Color
     var body: some View {
-        HStack(spacing: 10) {
-            VStack(spacing: 3) {
+        HStack(spacing: 8) {
+            VStack(spacing: 2) {
                 Circle().strokeBorder(Color.secondary, lineWidth: 1.5).frame(width: 7, height: 7)
-                Rectangle().fill(Color.secondary.opacity(0.25)).frame(width: 1, height: 17)
+                Rectangle().fill(Color.secondary.opacity(0.25)).frame(width: 1, height: 12)
                 Circle().fill(color).frame(width: 7, height: 7)
             }.accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 7) {
-                Text(origin).font(.subheadline).foregroundStyle(.secondary)
-                Text(destination).font(.body.weight(.medium))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(origin).font(.caption).foregroundStyle(.secondary)
+                Text(destination).font(.subheadline.weight(.semibold))
             }.lineLimit(2)
         }
     }

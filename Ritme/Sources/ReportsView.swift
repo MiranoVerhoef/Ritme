@@ -80,7 +80,7 @@ struct ReportsView: View {
                     HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Total distance").font(.subheadline).foregroundStyle(.secondary)
-                            Text("\(Format.km(trips.reduce(0) { $0 + $1.distanceMeters })) km").font(.largeTitle.weight(.semibold)).monospacedDigit().foregroundStyle(Style.accent)
+                            Text("\(Format.km(trips.reduce(0) { $0 + $1.distanceMeters })) km").font(.title2.weight(.semibold)).monospacedDigit().foregroundStyle(Style.accent)
                         }
                         Spacer()
                         Text("\(trips.count) trips").font(.subheadline).foregroundStyle(.secondary)
@@ -124,7 +124,7 @@ struct ReportsView: View {
                 if store.trips.contains(where: \.isDemo) {
                     Section { Text("Sample trips are excluded from reports and exports.").font(.footnote).foregroundStyle(.secondary) }
                 }
-            }.navigationTitle("Reports")
+            }.listSectionSpacing(.custom(12)).navigationTitle("Reports").navigationBarTitleDisplayMode(.inline)
                 .onChange(of: period) { exportURL = nil }.onChange(of: purpose) { exportURL = nil }.onChange(of: format) { exportURL = nil }
                 .onChange(of: store.revision) { exportURL = nil }
         }

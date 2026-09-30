@@ -2,6 +2,7 @@ import SwiftUI
 import MapKit
 
 struct TripsView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(TripStore.self) private var store
     @Environment(Recorder.self) private var recorder
     @State private var filter = "All"
@@ -32,14 +33,22 @@ struct TripsView: View {
                     }
                 }
                 Section {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
                         recordingStatus
                         Divider()
-                        HStack(spacing: 24) {
-                            total("Today", meters: todayTrips.reduce(0) { $0 + $1.distanceMeters })
-                            total("Work today", meters: todayTrips.filter { $0.kind == .work }.reduce(0) { $0 + $1.distanceMeters })
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 12) {
+                                total("Today", meters: todayTrips.reduce(0) { $0 + $1.distanceMeters }).fixedSize()
+                                Spacer(minLength: 0)
+                                recordingIndicator.fixedSize()
+                            }
+                            VStack(alignment: .leading, spacing: 6) {
+                                total("Today", meters: todayTrips.reduce(0) { $0 + $1.distanceMeters })
+                                recordingIndicator
+                            }
                         }
-                    }.padding(.vertical, 6)
+                    }.padding(.vertical, 2)
+                        .listRowInsets(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
                         .listRowBackground(Style.accent.opacity(0.07))
                 }
                 if store.preferences.holidayActive {
@@ -75,19 +84,29 @@ struct TripsView: View {
                 ForEach(days, id: \.self) { day in
                     Section {
                         ForEach(visible.filter { Calendar.current.isDate($0.startedAt, inSameDayAs: day) }) { trip in
-                            VStack(alignment: .leading, spacing: 10) {
-                                NavigationLink { TripDetailView(trip: trip) } label: { TripSummary(trip: trip, showRoute: trip.id == visible.first?.id) }
+                            VStack(alignment: .leading, spacing: 4) {
+                                NavigationLink { TripDetailView(trip: trip) } label: { TripSummary(trip: trip, vehicle: store.vehicleName(for: trip), showRoute: trip.id == visible.first?.id) }
                                 if trip.kind == .unclassified { KindButtons(selected: trip.kind) { store.mark(trip, as: $0) } }
-                            }.padding(.vertical, 4)
+                            }.listRowInsets(EdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 12))
                                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                     Button("Work") { store.mark(trip, as: .work) }.tint(Style.accent)
                                     Button("Private") { store.mark(trip, as: .personal) }.tint(.gray)
                                 }
                         }
-                    } header: { Text(dayTitle(day)).textCase(nil) }
+                    } header: {
+                        HStack {
+                            Text(dayTitle(day)).font(.caption.weight(.semibold))
+                            Spacer()
+                            let dayTrips = visible.filter { Calendar.current.isDate($0.startedAt, inSameDayAs: day) }
+                            Text(daySummary(dayTrips))
+                                .font(.caption2).monospacedDigit()
+                        }.textCase(nil)
+                    }
                 }
             }
-            .listStyle(.insetGrouped).navigationTitle("Trips")
+            .listStyle(.insetGrouped).listSectionSpacing(.custom(12))
+            .environment(\.defaultMinListRowHeight, 0)
+            .navigationTitle("Ritme").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button { showingSearch.toggle(); if !showingSearch { search = "" } } label: { Image(systemName: "magnifyingglass") }.accessibilityLabel("Search trips") }
                 ToolbarItem(placement: .topBarTrailing) { Button { manual = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add a manual trip") }
@@ -98,14 +117,16 @@ struct TripsView: View {
         }
     }
     private var recordingStatus: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                PlaceSymbol(symbol: "car.fill")
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(store.activeTrip == nil ? "CURRENT VEHICLE" : "RECORDING")
-                        .font(.caption2.weight(.semibold)).tracking(0.8).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "car.fill").font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(Style.accent).frame(width: 34, height: 34)
+                    .background(Style.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(store.activeTrip == nil ? "Current vehicle" : "Trip in progress").font(.caption2).foregroundStyle(.secondary)
                     if let active = store.activeTrip {
-                        Text(store.vehicleName(for: active)).font(.headline)
+                        Text(store.vehicleName(for: active)).font(.subheadline.weight(.semibold))
                     } else if let vehicle = store.selectedVehicle {
                         Menu {
                             ForEach(store.vehicles) { vehicle in
@@ -119,49 +140,51 @@ struct TripsView: View {
                             Button("Add vehicle", systemImage: "plus") { addVehicle = true }
                         } label: {
                             HStack(spacing: 5) {
-                                Text(vehicle.name).font(.headline).foregroundStyle(.primary).lineLimit(1)
-                                Image(systemName: "chevron.down").font(.caption2.weight(.semibold)).foregroundStyle(Style.accent)
-                            }
-                        }
-                        .buttonStyle(.borderless).accessibilityLabel("Select vehicle, current vehicle \(vehicle.name)")
+                                Text(vehicle.name).font(.subheadline.weight(.semibold)).foregroundStyle(.primary).lineLimit(1)
+                                Image(systemName: "chevron.down").font(.caption2).foregroundStyle(Style.accent)
+                            }.frame(minHeight: 28)
+                        }.buttonStyle(.borderless).accessibilityLabel("Select vehicle, current vehicle \(vehicle.name)")
                     } else {
-                        Button("Add your car") { addVehicle = true }.font(.headline).buttonStyle(.borderless)
+                        Button("Add your car") { addVehicle = true }.font(.subheadline.weight(.semibold)).buttonStyle(.borderless)
                     }
                 }
-                Spacer(minLength: 0)
-            }
-            HStack {
-                HStack(spacing: 6) {
-                    Circle().fill(store.activeTrip == nil ? Color.secondary : Color.green).frame(width: 6, height: 6)
-                    Text(store.activeTrip == nil ? "Not recording" : "Trip in progress").font(.subheadline).foregroundStyle(.secondary)
-                }.accessibilityElement(children: .combine)
-                Spacer()
+                Spacer(minLength: 4)
                 if store.activeTrip == nil {
-                    Button { recorder.start() } label: { Label("Start trip", systemImage: "play.fill").font(.subheadline.weight(.semibold)) }
-                        .buttonStyle(.borderedProminent).accessibilityLabel("Start recording a trip").accessibilityIdentifier("startTrip")
+                    Button { recorder.start() } label: { Label("Start", systemImage: "play.fill").font(.caption.weight(.semibold)).frame(minHeight: 32) }
+                        .buttonStyle(.borderedProminent).controlSize(.small)
+                        .accessibilityLabel("Start recording a trip").accessibilityIdentifier("startTrip")
                 } else {
-                    Button("Finish trip") { confirmStop = true }.buttonStyle(.borderedProminent).accessibilityLabel("Finish recording this trip")
+                    Button("Finish") { confirmStop = true }.font(.caption.weight(.semibold)).frame(minHeight: 44)
+                        .buttonStyle(.borderedProminent).controlSize(.small).accessibilityLabel("Finish recording this trip")
                 }
             }
             if let trip = store.activeTrip {
                 HStack {
-                    Text("\(Format.km(trip.distanceMeters)) km").monospacedDigit()
+                    Text("\(Format.km(trip.distanceMeters)) km").font(.headline).monospacedDigit()
+                    TimelineView(.periodic(from: .now, by: 60)) { _ in Text(Format.duration(trip.duration)).monospacedDigit().font(.caption) }
                     Spacer()
-                    TimelineView(.periodic(from: .now, by: 60)) { _ in Text(Format.duration(trip.duration)).monospacedDigit() }
-                }.font(.title3.weight(.semibold))
-                HStack {
-                    Text(recorder.status).font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Resume GPS") { recorder.resume() }.font(.caption).buttonStyle(.borderless)
+                    Button("Resume GPS") { recorder.resume() }.font(.caption).buttonStyle(.borderless).frame(minHeight: 44)
                 }
+                Text(recorder.status).font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
+    private var recordingIndicator: some View {
+        HStack(spacing: 5) {
+            Circle().fill(store.activeTrip == nil ? Color.secondary : .green).frame(width: 5, height: 5)
+            Text(store.activeTrip == nil ? "Not recording" : "Recording").font(.caption2).foregroundStyle(.secondary)
+        }.accessibilityElement(children: .combine)
+    }
     private func total(_ title: String, meters: Double) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Text("\(Format.km(meters)) km").font(.title3.weight(.semibold)).monospacedDigit()
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        (Text(title + " ").foregroundColor(.secondary)
+         + Text("\(Format.km(meters)) km").bold()
+         + Text(" · Work \(Format.km(todayTrips.filter { $0.kind == .work }.reduce(0) { $0 + $1.distanceMeters })) km").foregroundColor(.secondary))
+            .font(.caption2).monospacedDigit().fixedSize(horizontal: false, vertical: true)
+    }
+    private func daySummary(_ trips: [Trip]) -> String {
+        if trips.allSatisfy(\.isDemo) { return "\(trips.count) sample \(trips.count == 1 ? "trip" : "trips")" }
+        let real = trips.filter { !$0.isDemo }
+        return "\(real.count) \(real.count == 1 ? "trip" : "trips") · \(Format.km(real.reduce(0) { $0 + $1.distanceMeters })) km"
     }
     private func dayTitle(_ day: Date) -> String {
         if Calendar.current.isDateInToday(day) { return "Today" }
@@ -171,7 +194,9 @@ struct TripsView: View {
 }
 
 struct TripSummary: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var trip: Trip
+    var vehicle = "No vehicle"
     var showRoute = false
     private var previewRect: MKMapRect {
         let rect = trip.points.map { point in
@@ -181,33 +206,50 @@ struct TripSummary: View {
         return rect.insetBy(dx: -max(rect.size.width * 0.2, 500), dy: -max(rect.size.height * 0.2, 500))
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(trip.startedAt.formatted(date: .omitted, time: .shortened)).font(.caption).foregroundStyle(.secondary)
-                if trip.isDemo { Text("Sample").font(.caption).foregroundStyle(.secondary) }
-                Spacer()
-                KindBadge(kind: trip.kind)
+        VStack(alignment: .leading, spacing: 6) {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 3) {
+                    timeRange
+                    distance
+                }
+            } else {
+                HStack(spacing: 5) { timeRange; Spacer(minLength: 4); distance }
             }
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .center, spacing: 10) {
                 RouteStops(origin: trip.origin, destination: trip.destination, color: Style.color(trip.kind))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                VStack(alignment: .trailing, spacing: 5) {
-                    Text("\(Format.km(trip.distanceMeters)) km").font(.subheadline.weight(.semibold)).monospacedDigit()
-                    Text(Format.duration(trip.duration)).font(.caption).foregroundStyle(.secondary)
-                }.fixedSize(horizontal: true, vertical: false)
-            }
-            if showRoute && !trip.points.isEmpty {
+                if showRoute && !trip.points.isEmpty && !dynamicTypeSize.isAccessibilitySize {
                 Map(initialPosition: .rect(previewRect)) {
                     MapPolyline(coordinates: trip.points.map(\.coordinate)).stroke(Style.accent, lineWidth: 3)
                     if let first = trip.points.first { Annotation("", coordinate: first.coordinate) { Circle().fill(.white).frame(width: 9, height: 9).overlay(Circle().stroke(Style.accent, lineWidth: 2)) } }
                     if let last = trip.points.last { Annotation("", coordinate: last.coordinate) { Circle().fill(Style.accent).frame(width: 10, height: 10).overlay(Circle().stroke(.white, lineWidth: 2)) } }
                 }.mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
-                    .mapControlVisibility(.hidden).frame(height: 90)
-                    .clipShape(RoundedRectangle(cornerRadius: 10)).allowsHitTesting(false)
+                    .mapControlVisibility(.hidden).frame(width: 76, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 8)).allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
+            }
+            HStack(spacing: 8) {
+                KindBadge(kind: trip.kind)
+                Text(Format.duration(trip.duration)).monospacedDigit()
+                if vehicle != "No vehicle" { Label(vehicle, systemImage: "car.fill").lineLimit(1) }
+                Spacer(minLength: 0)
+                Text(trip.isDemo ? "Sample" : trip.source == "Manual" ? "Manual" : "GPS").font(.caption2)
+            }.font(.caption2).foregroundStyle(.secondary)
         }.accessibilityElement(children: .combine)
     }
+    private var timeRange: some View {
+        Text(trip.startedAt.formatted(date: .omitted, time: .shortened)
+             + (trip.endedAt.map { " – " + $0.formatted(date: .omitted, time: .shortened) } ?? "")
+             + (trip.isDemo ? " · Sample" : ""))
+            .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+    }
+    private var distance: some View {
+        Text("\(Format.km(trip.distanceMeters)) km")
+            .font(.subheadline.weight(.semibold)).foregroundStyle(Style.accent).monospacedDigit()
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
 }
 
 struct TripDetailView: View {
@@ -228,10 +270,13 @@ struct TripDetailView: View {
                 }
             }
             Section("Route") {
-                LabeledContent("From", value: trip.origin)
-                LabeledContent("To", value: trip.destination)
-                LabeledContent("Distance", value: "\(Format.km(trip.distanceMeters)) km")
-                LabeledContent("Duration", value: Format.duration(trip.duration))
+                RouteStops(origin: trip.origin, destination: trip.destination, color: Style.color(trip.kind))
+                    .padding(.vertical, 4)
+                HStack(spacing: 16) {
+                    metric("Distance", value: "\(Format.km(trip.distanceMeters)) km")
+                    metric("Duration", value: Format.duration(trip.duration))
+                    metric("GPS points", value: "\(trip.points.count)")
+                }.padding(.vertical, 2)
                 if trip.points.isEmpty { Text(trip.source == "Manual" ? "Distance entered manually. No recorded route." : "No usable GPS points were recorded.").font(.footnote).foregroundStyle(.secondary) }
             }
             Section {
@@ -246,8 +291,14 @@ struct TripDetailView: View {
                 TextField("Client or trip purpose", text: $trip.notes, axis: .vertical).lineLimit(3...6).onChange(of: trip.notes) { store.save() }
             }
             Section { Button("Delete trip", role: .destructive) { deleting = true } }
-        }.navigationTitle("Trip details").navigationBarTitleDisplayMode(.inline)
+        }.listSectionSpacing(.custom(12)).navigationTitle("Trip details").navigationBarTitleDisplayMode(.inline)
             .confirmationDialog("Delete this trip permanently?", isPresented: $deleting, titleVisibility: .visible) { Button("Delete trip", role: .destructive) { store.remove(trip); dismiss() } }
+    }
+    private func metric(_ label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(value).font(.subheadline.weight(.semibold)).monospacedDigit()
+        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
